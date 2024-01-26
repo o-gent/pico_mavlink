@@ -7,9 +7,9 @@
 #define target_component 1
 #define this_component MAV_COMP_ID_GPS
 
-#define heartbeat_ms 1000
-#define rangefinder1_ms 50
-#define recieve_ms 50
+const unsigned long heartbeat_ms = 1000;
+const unsigned long rangefinder1_ms = 50;
+const unsigned long recieve_ms = 50;
 
 rtos::Thread heartbeat_thread;
 rtos::Thread rangefinder1_thread;
@@ -95,7 +95,7 @@ void mav_request_data()
 
     for (int i = 0; i < maxStreams; i++)
     {
-        mavlink_msg_request_data_stream_pack(target_system, target_component, &msg, 1, 0, MAVStreams[i], MAVRates[i], 1);
+        mavlink_msg_request_data_stream_pack(target_system, this_component, &msg, target_system, target_component, MAVStreams[i], MAVRates[i], 1);
         uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
         Serial2.write(buf, len);
@@ -251,13 +251,13 @@ void setup()
     mav_request_data();
     gps2raw_request();
 
-    heartbeat_thread.set_priority(osPriorityLow);
+    //heartbeat_thread.set_priority(osPriorityLow);
     heartbeat_thread.start(heartbeat_update);
 
-    rangefinder1_thread.set_priority(osPriorityRealtime2);
+    //rangefinder1_thread.set_priority(osPriorityRealtime2);
     rangefinder1_thread.start(rangefinder_update);
 
-    recieve_mavlink.set_priority(osPriorityRealtime1);
+    //recieve_mavlink.set_priority(osPriorityRealtime1);
     recieve_mavlink.start(recieve_update);
 }
 
