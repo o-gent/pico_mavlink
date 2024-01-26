@@ -3,6 +3,7 @@
         "!cpp"
     ],
     "files.associations": {
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "thread": "cpp"
     }
 }
