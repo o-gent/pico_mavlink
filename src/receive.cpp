@@ -3,7 +3,7 @@
 /*
 Get new mavlink packets we're interested in
 */
-void receive_update()
+void receive_update(void * unused)
 {
     mavlink_message_t msg;
     mavlink_status_t status;
@@ -56,7 +56,7 @@ void receive_update()
                 //}
             }
         }
-        rtos::ThisThread::sleep_for(recieve_ms - (millis() - previous_run));
-        previous_run = millis();
+        // vTaskDelay((recieve_ms - (millis() - previous_run)));
+        // previous_run = millis();
     }
 }

@@ -1,3 +1,3 @@
 #include "settings.h"
 
-void receive_update();
+void receive_update(void * unused);

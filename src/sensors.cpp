@@ -5,7 +5,7 @@
 Routine to let the host ardupilot know we're still here
 We only need to create this message once
 */
-void heartbeat_update()
+void heartbeat_update(void * unused)
 {
     unsigned long previous_run = millis();
 
@@ -30,7 +30,7 @@ void heartbeat_update()
     {
         Serial2.write(buf, len);
 
-        rtos::ThisThread::sleep_for(heartbeat_ms - (millis() - previous_run));
+        vTaskDelay(heartbeat_ms - (millis() - previous_run));
         previous_run = millis();
     }
 }
@@ -39,7 +39,7 @@ void heartbeat_update()
 /*
 Routine for sending new rangefinder information
 */
-void rangefinder1_update()
+void rangefinder1_update(void * unused)
 {
     unsigned long previous_run = millis();
     int i = 0;
@@ -70,7 +70,48 @@ void rangefinder1_update()
 
         Serial2.write(buf, len);
         
-        rtos::ThisThread::sleep_for(rangefinder1_ms - (millis() - previous_run));
+        vTaskDelay(rangefinder1_ms - (millis() - previous_run));
+        previous_run = millis();
+    }
+}
+
+
+/*
+Routine for sending new rangefinder information
+*/
+void rangefinder2_update(void * unused)
+{
+    unsigned long previous_run = millis();
+    int i = 0;
+
+    mavlink_distance_sensor_t dist;
+    dist.time_boot_ms = millis();
+    dist.min_distance = 0;
+    dist.max_distance = UINT16_MAX;
+    dist.type = MAV_DISTANCE_SENSOR_UNKNOWN;
+    dist.id = 1;
+    // the orientation needs to match the orientation set in ardupilot otherwise it'll be rejected
+    dist.orientation = MAV_SENSOR_ROTATION_NONE;
+    dist.covariance = UINT8_MAX;
+    dist.horizontal_fov = 0;
+    dist.vertical_fov = 0;
+    dist.signal_quality = 0;
+    
+    mavlink_message_t msg;
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    
+    while (true)
+    {
+        i++;
+        dist.current_distance = i++;
+
+        mavlink_msg_distance_sensor_encode(target_system, this_component, &msg, &dist);
+
+        uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+        Serial2.write(buf, len);
+        
+        vTaskDelay(rangefinder1_ms - (millis() - previous_run));
         previous_run = millis();
     }
 }
