@@ -8,6 +8,7 @@ void receive_update(void * unused)
     mavlink_message_t msg;
     mavlink_status_t status;
     unsigned long previous_run = millis();
+    bool led_toggle = false;
 
     while (true)
     {
@@ -21,6 +22,7 @@ void receive_update(void * unused)
                 {
                 case MAVLINK_MSG_ID_HEARTBEAT:
                 {
+                    digitalWrite(LED_BUILTIN, HIGH);
                     mavlink_heartbeat_t heartbeat;
                     mavlink_msg_heartbeat_decode(&msg, &heartbeat);
 
@@ -29,6 +31,17 @@ void receive_update(void * unused)
                     uint8_t baseMode = heartbeat.base_mode;
 
                     Serial.println("Heartbeat");
+                    if(led_toggle)
+                    {
+                        digitalWrite(LED_BUILTIN, LOW);
+                        led_toggle = false;
+                    }
+                    else 
+                    {
+                        digitalWrite(LED_BUILTIN, HIGH);
+                        led_toggle = true;
+                    }
+                    
                     break;
                 }
 
