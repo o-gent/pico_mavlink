@@ -1,7 +1,4 @@
-#include "settings.h"
-#include "sensors.h"
-#include "commands.h"
-#include "receive.h"
+#include "mavnode.h"
 
 TaskHandle_t heartbeat_thread;
 TaskHandle_t rangefinder1_thread;
@@ -10,6 +7,14 @@ TaskHandle_t recieve_mavlink;
 
 SerialPIO Serial3(14,15);
 SerialPIO Serial4(16,17);
+
+MavNode *mavnode;
+
+void start_task_heartbeat(void* _this){ ((MavNode*)_this)->heartbeat_update(); }
+void start_task_rangefinder1_update(void* _this){ ((MavNode*)_this)->rangefinder1_update(); }
+void start_task_rangefinder2_update(void* _this){ ((MavNode*)_this)->rangefinder2_update(); }
+void start_task_receive_update(void* _this){ ((MavNode*)_this)->receive_update(); }
+
 
 /*
 Setup comms links, start threads
@@ -21,50 +26,50 @@ void setup()
     Serial.begin(9600);
     Serial.println("started");
     
-    
-    Serial1.begin(56700);
-    Serial1.println("hi");
+    SERIAL_MAVLINK.begin(57600);
 
-    Serial2.begin(57600);
+    SERIAL_SENSOR_1.begin(56700);
 
-    Serial3.begin(57600);
+    SERIAL_SENSOR_2.begin(57600);
 
-    Serial4.begin(57600);
+    SERIAL_MAVFWD.begin(57600);
 
+    // EEPROM.begin(512);
 
+    // mavnode->param_init();
 
     xTaskCreate(
-        heartbeat_update, /* Task function. */
+        start_task_heartbeat, /* Task function. */
         "record",         /* name of task. */
         1000,            /* Stack size of task */
-        NULL,             /* parameter of the task */
+        &mavnode,             /* parameter of the task */
         3,                /* priority of the task */
         &heartbeat_thread /* Task handle to keep track of created task */
     );
 
     xTaskCreate(
-        rangefinder1_update, /* Task function. */
+        start_task_rangefinder1_update, /* Task function. */
         "rangefinder",       /* name of task. */
         1000,               /* Stack size of task */
-        NULL,                /* parameter of the task */
+        &mavnode,                /* parameter of the task */
         1,                   /* priority of the task */
         &rangefinder1_thread /* Task handle to keep track of created task */
     );
 
     xTaskCreate(
-        rangefinder2_update, /* Task function. */
+        start_task_rangefinder2_update, /* Task function. */
         "rangefinder2",       /* name of task. */
         1000,               /* Stack size of task */
-        NULL,                /* parameter of the task */
+        &mavnode,                /* parameter of the task */
         1,                   /* priority of the task */
         &rangefinder2_thread /* Task handle to keep track of created task */
     );
 
     xTaskCreate(
-        receive_update,  /* Task function. */
+        start_task_receive_update,  /* Task function. */
         "recieve",       /* name of task. */
         1000,           /* Stack size of task */
-        NULL,            /* parameter of the task */
+        &mavnode,            /* parameter of the task */
         2,               /* priority of the task */
         &recieve_mavlink /* Task handle to keep track of created task */
     );
@@ -75,7 +80,9 @@ Our loop does nothing as all the activities are in threads
 */
 void loop()
 {   
-    mav_request_data();
-    gps2raw_request();
+    mavnode->mav_request_data();
+    mavnode->gps2raw_request();
     vTaskDelay(10000);
 }
+
+

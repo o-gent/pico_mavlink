@@ -1,47 +1,26 @@
-#include "receive.h"
+#include "mavnode.h"
 
 /*
 Get new mavlink packets we're interested in
 */
-void receive_update(void * unused)
+void MavNode::receive_update()
 {
     mavlink_message_t msg;
     mavlink_status_t status;
     unsigned long previous_run = millis();
-    bool led_toggle = false;
-
+    
     while (true)
     {
-        while (Serial2.available() > 0)
+        while (SERIAL_MAVLINK.available() > 0)
         {
-            uint8_t c = Serial2.read();
+            uint8_t c = SERIAL_MAVLINK.read();
             if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
             {
-
                 switch (msg.msgid)
                 {
                 case MAVLINK_MSG_ID_HEARTBEAT:
                 {
-                    digitalWrite(LED_BUILTIN, HIGH);
-                    mavlink_heartbeat_t heartbeat;
-                    mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-
-                    uint8_t systemType = heartbeat.type;
-                    uint8_t autopilotType = heartbeat.autopilot;
-                    uint8_t baseMode = heartbeat.base_mode;
-
-                    Serial.println("Heartbeat");
-                    if(led_toggle)
-                    {
-                        digitalWrite(LED_BUILTIN, LOW);
-                        led_toggle = false;
-                    }
-                    else 
-                    {
-                        digitalWrite(LED_BUILTIN, HIGH);
-                        led_toggle = true;
-                    }
-                    
+                    recv_heartbeat(&msg);
                     break;
                 }
 
@@ -59,6 +38,15 @@ void receive_update(void * unused)
                     break;
                 }
 
+                // https://mavlink.io/en/messages/common.html#PARAM_REQUEST_LIST
+                case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+                {
+                    mavlink_param_request_list_t paramrequestlist;
+                    mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
+                    // this->send_all_parameters();
+                    break;
+                }
+
                 default:
                 {
                     break;
@@ -71,5 +59,29 @@ void receive_update(void * unused)
         }
         // vTaskDelay((recieve_ms - (millis() - previous_run)));
         // previous_run = millis();
+    }
+}
+
+void MavNode::recv_heartbeat(mavlink_message_t *msg)
+{
+    static bool led_toggle = false;
+    digitalWrite(LED_BUILTIN, HIGH);
+    mavlink_heartbeat_t heartbeat;
+    mavlink_msg_heartbeat_decode(msg, &heartbeat);
+
+    uint8_t systemType = heartbeat.type;
+    uint8_t autopilotType = heartbeat.autopilot;
+    uint8_t baseMode = heartbeat.base_mode;
+
+    Serial.println("Heartbeat");
+    if (led_toggle)
+    {
+        digitalWrite(LED_BUILTIN, LOW);
+        led_toggle = false;
+    }
+    else
+    {
+        digitalWrite(LED_BUILTIN, HIGH);
+        led_toggle = true;
     }
 }

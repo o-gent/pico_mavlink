@@ -1,11 +1,11 @@
-#include "sensors.h"
+#include "mavnode.h"
 
 
 /*
 Routine to let the host ardupilot know we're still here
 We only need to create this message once
 */
-void heartbeat_update(void * unused)
+void MavNode::heartbeat_update()
 {
     unsigned long previous_run = millis();
 
@@ -21,14 +21,14 @@ void heartbeat_update(void * unused)
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
     // Pack the message
-    mavlink_msg_heartbeat_pack(target_system, this_component, &msg, type, autopilot_type, system_mode, custom_mode, system_state);
+    mavlink_msg_heartbeat_pack(TARGET_SYSTEM, THIS_COMPONENT, &msg, type, autopilot_type, system_mode, custom_mode, system_state);
 
     // Copy the message to the send buffer
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
     while (true)
     {
-        Serial2.write(buf, len);
+        SERIAL_MAVLINK.write(buf, len);
 
         vTaskDelay(heartbeat_ms - (millis() - previous_run));
         previous_run = millis();
@@ -39,7 +39,7 @@ void heartbeat_update(void * unused)
 /*
 Routine for sending new rangefinder information
 */
-void rangefinder1_update(void * unused)
+void MavNode::rangefinder1_update()
 {
     unsigned long previous_run = millis();
     int i = 0;
@@ -64,11 +64,11 @@ void rangefinder1_update(void * unused)
     {
         dist.current_distance = i++;
 
-        mavlink_msg_distance_sensor_encode(target_system, this_component, &msg, &dist);
+        mavlink_msg_distance_sensor_encode(TARGET_SYSTEM, THIS_COMPONENT, &msg, &dist);
 
         uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-        Serial2.write(buf, len);
+        SERIAL_MAVLINK.write(buf, len);
         
         vTaskDelay(rangefinder1_ms - (millis() - previous_run));
         previous_run = millis();
@@ -79,7 +79,7 @@ void rangefinder1_update(void * unused)
 /*
 Routine for sending new rangefinder information
 */
-void rangefinder2_update(void * unused)
+void MavNode::rangefinder2_update()
 {
     unsigned long previous_run = millis();
     int i = 0;
@@ -105,11 +105,11 @@ void rangefinder2_update(void * unused)
         i++;
         dist.current_distance = i++;
 
-        mavlink_msg_distance_sensor_encode(target_system, this_component, &msg, &dist);
+        mavlink_msg_distance_sensor_encode(TARGET_SYSTEM, THIS_COMPONENT, &msg, &dist);
 
         uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-        Serial2.write(buf, len);
+        SERIAL_MAVLINK.write(buf, len);
         
         vTaskDelay(rangefinder1_ms - (millis() - previous_run));
         previous_run = millis();

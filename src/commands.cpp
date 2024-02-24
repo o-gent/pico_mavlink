@@ -1,10 +1,10 @@
-#include "commands.h"
+#include "mavnode.h"
 
 
 /*
 Example of how to send a command
 */
-void reboot()
+void MavNode::reboot()
 {
     uint16_t command = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN; // Specific command for PX4
     uint8_t confirmation = 0;
@@ -20,19 +20,19 @@ void reboot()
     mavlink_message_t msg;
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
-    mavlink_msg_command_long_pack(target_system, this_component, &msg, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7);
+    mavlink_msg_command_long_pack(TARGET_SYSTEM, THIS_COMPONENT, &msg, TARGET_SYSTEM, TARGET_COMPONENT, command, confirmation, param1, param2, param3, param4, param5, param6, param7);
 
     // Copy the message to the send buffer
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
     // Send the message (.write sends as bytes)
-    Serial2.write(buf, len);
+    SERIAL_MAVLINK.write(buf, len);
 }
 
 
 /*
 
 */
-void gps2raw_request()
+void MavNode::gps2raw_request()
 {
     uint16_t command = MAV_CMD_SET_MESSAGE_INTERVAL; // Specific command for PX4
     uint8_t confirmation = 0;
@@ -48,19 +48,19 @@ void gps2raw_request()
     mavlink_message_t msg;
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
-    mavlink_msg_command_long_pack(target_system, this_component, &msg, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7);
+    mavlink_msg_command_long_pack(TARGET_SYSTEM, THIS_COMPONENT, &msg, TARGET_SYSTEM, TARGET_COMPONENT, command, confirmation, param1, param2, param3, param4, param5, param6, param7);
 
     // Copy the message to the send buffer
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
     // Send the message (.write sends as bytes)
-    Serial2.write(buf, len);
+    SERIAL_MAVLINK.write(buf, len);
 }
 
 
 /*
 Request data streams from the autopilot
 */
-void mav_request_data()
+void MavNode::mav_request_data()
 {
     mavlink_message_t msg;
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -72,9 +72,31 @@ void mav_request_data()
 
     for (int i = 0; i < maxStreams; i++)
     {
-        mavlink_msg_request_data_stream_pack(target_system, this_component, &msg, target_system, target_component, MAVStreams[i], MAVRates[i], 1);
+        mavlink_msg_request_data_stream_pack(TARGET_SYSTEM, THIS_COMPONENT, &msg, TARGET_SYSTEM, TARGET_COMPONENT, MAVStreams[i], MAVRates[i], 1);
         uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-        Serial2.write(buf, len);
+        SERIAL_MAVLINK.write(buf, len);
     }
+}
+
+/*
+
+*/
+void MavNode::gcs_status(const char gcstext[])
+{
+    mavlink_statustext_t statustext;
+    memset(&statustext, 0, sizeof(statustext));
+
+    // Set the text of the message
+    strncpy(statustext.text, gcstext, sizeof(statustext.text));
+
+    mavlink_message_t msg;
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+    mavlink_msg_statustext_encode(TARGET_SYSTEM, THIS_COMPONENT, &msg, &statustext);
+
+    // Copy the message to the send buffer
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+    SERIAL_MAVLINK.write(buf, len);
 }
