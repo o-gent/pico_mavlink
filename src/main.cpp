@@ -37,6 +37,8 @@ void setup()
     EEPROM.begin(512);
 
     mavnode->param_init();
+    xSemaphoreTake(mavnode->parameterSemaphore, (TickType_t)10);
+    xSemaphoreGive(mavnode->parameterSemaphore);
 
     xTaskCreate(
         start_task_heartbeat, /* Task function. */
@@ -68,7 +70,7 @@ void setup()
     xTaskCreate(
         start_task_receive_update,  /* Task function. */
         "recieve",       /* name of task. */
-        1000,           /* Stack size of task */
+        10000,           /* Stack size of task */
         &mavnode,            /* parameter of the task */
         2,               /* priority of the task */
         &recieve_mavlink /* Task handle to keep track of created task */

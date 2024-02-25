@@ -44,6 +44,7 @@ class MavNode
             {"PARAM2", 2, MAV_PARAM_TYPE_UINT16, 0}
         };
 
+        SemaphoreHandle_t parameterSemaphore = NULL;
     private:
         // commands.cpp
         void reboot();
@@ -54,7 +55,7 @@ class MavNode
         void send_all_parameters(void);
         Param get_parameter(const char *name);
         Param get_parameter(int number);
-        SemaphoreHandle_t parameterSemaphore;
+
         void receive_parameter(mavlink_message_t *msg);
         void set_parameter(char* name, float value);
         void read_params_from_memory(void);

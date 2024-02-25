@@ -1,8 +1,16 @@
 #include "mavnode.h"
 
+/*
+https://mavlink.io/en/services/parameter.html
+*/
+
 void MavNode::param_init()
 {
     this->parameterSemaphore = xSemaphoreCreateMutex();
+    if (this->parameterSemaphore == NULL)
+    {
+        this->gcs_status("Semaphore creation failed");
+    }
     // this->read_params_from_memory();
 }
 
@@ -39,8 +47,8 @@ void MavNode::send_all_parameters()
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
-        Param parameter = this->get_parameter(i);
         this->gcs_status("Sending parameter");
+        Param parameter = this->get_parameter(i);
         this->send_parameter(parameter);
     }
 }
@@ -86,12 +94,13 @@ Threadsafe method to get a parameter by index
 */
 Param MavNode::get_parameter(const int number)
 {
-    if (parameterSemaphore != NULL)
+    if (this->parameterSemaphore != NULL)
     {
-        if (xSemaphoreTake(parameterSemaphore, (TickType_t)10) == pdTRUE)
+        if (xSemaphoreTake(this->parameterSemaphore, (TickType_t)10) == pdTRUE)
         {
-            Param param = mavnodeParam[number];
-            xSemaphoreGive(parameterSemaphore);
+            this->gcs_status("get_parameter 3");
+            Param param = this->mavnodeParam[number];
+            xSemaphoreGive(this->parameterSemaphore);
             return param;
         }
     }
