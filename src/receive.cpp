@@ -8,7 +8,7 @@ void MavNode::receive_update()
     mavlink_message_t msg;
     mavlink_status_t status;
     unsigned long previous_run = millis();
-    
+
     while (true)
     {
         while (SERIAL_MAVLINK.available() > 0)
@@ -20,30 +20,39 @@ void MavNode::receive_update()
                 {
                 case MAVLINK_MSG_ID_HEARTBEAT:
                 {
-                    recv_heartbeat(&msg);
+                    this->recv_heartbeat(&msg);
                     break;
                 }
 
                 case MAVLINK_MSG_ID_GPS2_RAW:
                 {
-                    mavlink_gps2_raw_t gps2raw;
-                    mavlink_msg_gps2_raw_decode(&msg, &gps2raw);
-
-                    int32_t lat;
-                    int32_t lon;
-                    int32_t alt = gps2raw.alt;
-
-                    Serial.print("Alt:");
-                    Serial.println(alt);
+                    this->recv_gps2raw(&msg);
                     break;
                 }
 
                 // https://mavlink.io/en/messages/common.html#PARAM_REQUEST_LIST
                 case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
                 {
-                    mavlink_param_request_list_t paramrequestlist;
-                    mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
-                    // this->send_all_parameters();
+                    // mavlink_param_request_list_t paramrequestlist;
+                    // mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
+                    this->gcs_status("PARAM_REQUEST_LIST");
+                    this->send_all_parameters();
+                    break;
+                }
+
+                case MAVLINK_MSG_ID_PARAM_SET:
+                {
+                    mavlink_param_set_t paramset;
+                    mavlink_msg_param_set_decode(&msg, &paramset);
+                    this->gcs_status("PARAM_SET");
+                    break;
+                }
+
+                case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
+                {
+                    mavlink_param_request_read_t paramrequestread;
+                    mavlink_msg_param_request_read_decode(&msg, &paramrequestread);
+                    this->gcs_status("PARAM_REQUEST_READ");
                     break;
                 }
 
@@ -52,13 +61,8 @@ void MavNode::receive_update()
                     break;
                 }
                 }
-                // else{
-                // Serial.print("No Heartbeat\n");
-                //}
             }
         }
-        // vTaskDelay((recieve_ms - (millis() - previous_run)));
-        // previous_run = millis();
     }
 }
 
@@ -84,4 +88,17 @@ void MavNode::recv_heartbeat(mavlink_message_t *msg)
         digitalWrite(LED_BUILTIN, HIGH);
         led_toggle = true;
     }
+}
+
+void MavNode::recv_gps2raw(mavlink_message_t *msg)
+{
+    mavlink_gps2_raw_t gps2raw;
+    mavlink_msg_gps2_raw_decode(msg, &gps2raw);
+
+    int32_t lat;
+    int32_t lon;
+    int32_t alt = gps2raw.alt;
+
+    Serial.print("Alt:");
+    Serial.println(alt);
 }

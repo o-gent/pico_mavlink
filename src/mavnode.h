@@ -2,8 +2,8 @@
 #include <ardupilotmega/mavlink.h>
 #include <FreeRTOS.h>
 #include "task.h"
-// #include <EEPROM.h>
-// #include <semphr.h>
+#include <EEPROM.h>
+#include <semphr.h>
 
 #define SERIAL_MAVLINK Serial1
 #define SERIAL_SENSOR_1 Serial2
@@ -20,13 +20,13 @@
 
 #define PARAMETER_COUNT 2
 
-// struct Param
-// {
-//     const char *name;
-//     uint16_t index;
-//     uint8_t type;
-//     float value;
-// };
+struct Param
+{
+    const char *name;
+    uint16_t index;
+    uint8_t type;
+    float value;
+};
 
 class MavNode
 {
@@ -37,30 +37,32 @@ class MavNode
         void rangefinder1_update(); // sensors
         void rangefinder2_update(); // sensors
         void heartbeat_update();    // commands
-        // void param_init(void);      // parameters
+        void param_init(void);      // parameters
 
-        // Param mavnodeParam[PARAMETER_COUNT] = {
-        //     {"PARAM1", 1, MAV_PARAM_TYPE_UINT16, 0},
-        //     {"PARAM2", 2, MAV_PARAM_TYPE_UINT16, 0}};
+        Param mavnodeParam[PARAMETER_COUNT] = {
+            {"PARAM1", 1, MAV_PARAM_TYPE_UINT16, 0},
+            {"PARAM2", 2, MAV_PARAM_TYPE_UINT16, 0}
+        };
 
     private:
         // commands.cpp
         void reboot();
         void gcs_status(const char gcstext[]);
 
-        // parameters.cpp
-        // void send_parameter(Param &parameter);
-        // void send_all_parameters(void);
-        // Param get_parameter(const char *name);
-        // Param get_parameter(int number);
-        // SemaphoreHandle_t parameterSemaphore;
-        // void receive_parameter(mavlink_message_t *msg);
-        // void set_parameter(Param &parameter);
-        // void read_params_from_memory(void);
-        // void write_params_to_memory(void);
+        //parameters.cpp
+        void send_parameter(Param parameter);
+        void send_all_parameters(void);
+        Param get_parameter(const char *name);
+        Param get_parameter(int number);
+        SemaphoreHandle_t parameterSemaphore;
+        void receive_parameter(mavlink_message_t *msg);
+        void set_parameter(char* name, float value);
+        void read_params_from_memory(void);
+        void write_params_to_memory(void);
 
         // receive.cpp
         void recv_heartbeat(mavlink_message_t *msg);
+        void recv_gps2raw(mavlink_message_t *msg);
 
         // sensors.cpp
         uint16_t rangefinder1_dist;

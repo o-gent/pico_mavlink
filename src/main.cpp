@@ -34,9 +34,9 @@ void setup()
 
     SERIAL_MAVFWD.begin(57600);
 
-    // EEPROM.begin(512);
+    EEPROM.begin(512);
 
-    // mavnode->param_init();
+    mavnode->param_init();
 
     xTaskCreate(
         start_task_heartbeat, /* Task function. */
