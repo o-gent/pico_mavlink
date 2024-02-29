@@ -5,7 +5,7 @@
 Routine to let the host ardupilot know we're still here
 We only need to create this message once
 */
-void MavNode::heartbeat_update()
+void heartbeat_update(MavNode *mavnode)
 {
     unsigned long previous_run = millis();
 
@@ -39,7 +39,7 @@ void MavNode::heartbeat_update()
 /*
 Routine for sending new rangefinder information
 */
-void MavNode::rangefinder1_update()
+void rangefinder1_update(MavNode *mavnode)
 {
     unsigned long previous_run = millis();
     int i = 0;
@@ -79,7 +79,7 @@ void MavNode::rangefinder1_update()
 /*
 Routine for sending new rangefinder information
 */
-void MavNode::rangefinder2_update()
+void rangefinder2_update(MavNode *mavnode)
 {
     unsigned long previous_run = millis();
     int i = 0;

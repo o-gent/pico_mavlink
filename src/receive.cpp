@@ -3,7 +3,7 @@
 /*
 Get new mavlink packets we're interested in
 */
-void MavNode::receive_update()
+void receive_update(MavNode *mavnode)
 {
     mavlink_message_t msg;
     mavlink_status_t status;
@@ -20,13 +20,13 @@ void MavNode::receive_update()
                 {
                 case MAVLINK_MSG_ID_HEARTBEAT:
                 {
-                    this->recv_heartbeat(&msg);
+                    recv_heartbeat(mavnode, &msg);
                     break;
                 }
 
                 case MAVLINK_MSG_ID_GPS2_RAW:
                 {
-                    this->recv_gps2raw(&msg);
+                    recv_gps2raw(mavnode, &msg);
                     break;
                 }
 
@@ -35,8 +35,7 @@ void MavNode::receive_update()
                 {
                     // mavlink_param_request_list_t paramrequestlist;
                     // mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
-                    this->gcs_status("PARAM_REQUEST_LIST");
-                    this->send_all_parameters();
+                    send_all_parameters(mavnode);
                     break;
                 }
 
@@ -44,7 +43,8 @@ void MavNode::receive_update()
                 {
                     mavlink_param_set_t paramset;
                     mavlink_msg_param_set_decode(&msg, &paramset);
-                    this->gcs_status("PARAM_SET");
+                    set_parameter(mavnode, paramset.param_id, paramset.param_value);
+                    send_parameter(mavnode, get_parameter(mavnode, paramset.param_id));
                     break;
                 }
 
@@ -52,7 +52,8 @@ void MavNode::receive_update()
                 {
                     mavlink_param_request_read_t paramrequestread;
                     mavlink_msg_param_request_read_decode(&msg, &paramrequestread);
-                    this->gcs_status("PARAM_REQUEST_READ");
+                    Param param = get_parameter(mavnode, paramrequestread.param_index);
+                    send_parameter(mavnode, param);
                     break;
                 }
 
@@ -66,7 +67,7 @@ void MavNode::receive_update()
     }
 }
 
-void MavNode::recv_heartbeat(mavlink_message_t *msg)
+void recv_heartbeat(MavNode *mavnode, mavlink_message_t *msg)
 {
     static bool led_toggle = false;
     digitalWrite(LED_BUILTIN, HIGH);
@@ -90,7 +91,7 @@ void MavNode::recv_heartbeat(mavlink_message_t *msg)
     }
 }
 
-void MavNode::recv_gps2raw(mavlink_message_t *msg)
+void recv_gps2raw(MavNode *mavnode, mavlink_message_t *msg)
 {
     mavlink_gps2_raw_t gps2raw;
     mavlink_msg_gps2_raw_decode(msg, &gps2raw);

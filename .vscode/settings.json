@@ -4,7 +4,14 @@
     ],
     "files.associations": {
         "*.tcc": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "new": "cpp",
+        "system_error": "cpp",
+        "array": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
     },
     "cmake.configureOnOpen": false
 }

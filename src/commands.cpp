@@ -4,7 +4,7 @@
 /*
 Example of how to send a command
 */
-void MavNode::reboot()
+void reboot(MavNode *mavnode)
 {
     uint16_t command = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN; // Specific command for PX4
     uint8_t confirmation = 0;
@@ -32,7 +32,7 @@ void MavNode::reboot()
 /*
 
 */
-void MavNode::gps2raw_request()
+void gps2raw_request(MavNode *mavnode)
 {
     uint16_t command = MAV_CMD_SET_MESSAGE_INTERVAL; // Specific command for PX4
     uint8_t confirmation = 0;
@@ -60,7 +60,7 @@ void MavNode::gps2raw_request()
 /*
 Request data streams from the autopilot
 */
-void MavNode::mav_request_data()
+void mav_request_data(MavNode *mavnode)
 {
     mavlink_message_t msg;
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -82,7 +82,7 @@ void MavNode::mav_request_data()
 /*
 
 */
-void MavNode::gcs_status(const char gcstext[])
+void gcs_status(const char gcstext[])
 {
     mavlink_statustext_t statustext;
     memset(&statustext, 0, sizeof(statustext));

@@ -4,20 +4,20 @@
 https://mavlink.io/en/services/parameter.html
 */
 
-void MavNode::param_init()
+void param_init(MavNode *mavnode)
 {
-    this->parameterSemaphore = xSemaphoreCreateMutex();
-    if (this->parameterSemaphore == NULL)
+    mavnode->parameterSemaphore = xSemaphoreCreateMutex();
+    if (mavnode->parameterSemaphore == NULL)
     {
-        this->gcs_status("Semaphore creation failed");
+        gcs_status("Semaphore creation failed");
     }
-    // this->read_params_from_memory();
+    read_params_from_memory(mavnode);
 }
 
 /*
 Send a parameter to the autopilot
 */
-void MavNode::send_parameter(Param parameter)
+void send_parameter(MavNode *mavnode, Param parameter)
 {
     mavlink_param_value_t param;
 
@@ -43,48 +43,47 @@ void MavNode::send_parameter(Param parameter)
 /*
 iterate parameters to send to the autopilot
 */
-void MavNode::send_all_parameters()
+void send_all_parameters(MavNode *mavnode)
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
-        this->gcs_status("Sending parameter");
-        Param parameter = this->get_parameter(i);
-        this->send_parameter(parameter);
+        Param parameter = get_parameter(mavnode, i);
+        send_parameter(mavnode, parameter);
     }
 }
 
 /*
 Recieve an updated parameter from the autopilot
 */
-void MavNode::receive_parameter(mavlink_message_t *msg)
+void receive_parameter(MavNode *mavnode, mavlink_message_t *msg)
 {
     mavlink_param_set_t paramset;
     mavlink_msg_param_set_decode(msg, &paramset);
 
-    this->set_parameter(paramset.param_id, paramset.param_value);
+    set_parameter(mavnode, paramset.param_id, paramset.param_value);
 }
 
 /*
 Threadsafe method to get a parameter by name
 */
-Param MavNode::get_parameter(const char *name)
+Param get_parameter(MavNode *mavnode, const char *name)
 {
-    if (parameterSemaphore != NULL)
+    if (mavnode->parameterSemaphore != NULL)
     {
-        if (xSemaphoreTake(parameterSemaphore, (TickType_t)10) == pdTRUE)
+        if (xSemaphoreTake(mavnode->parameterSemaphore, (TickType_t)10) == pdTRUE)
         {
             for (int i = 0; i < PARAMETER_COUNT; i++)
             {
-                if (strcmp(mavnodeParam[i].name, name) == 0)
+                if (strcmp(mavnode->mavnodeParam[i].name, name) == 0)
                 {
-                    Param param = mavnodeParam[i];
-                    xSemaphoreGive(parameterSemaphore);
+                    Param param = mavnode->mavnodeParam[i];
+                    xSemaphoreGive(mavnode->parameterSemaphore);
                     return param;
                 }
             }
         }
     }
-    this->gcs_status("get_parameter error");
+    gcs_status("get_parameter error");
     Param param;
     return param;
 }
@@ -92,19 +91,19 @@ Param MavNode::get_parameter(const char *name)
 /*
 Threadsafe method to get a parameter by index
 */
-Param MavNode::get_parameter(const int number)
+Param get_parameter(MavNode *mavnode, const int number)
 {
-    if (this->parameterSemaphore != NULL)
+    
+    if (mavnode->parameterSemaphore != NULL)
     {
-        if (xSemaphoreTake(this->parameterSemaphore, (TickType_t)10) == pdTRUE)
+        if (xSemaphoreTake(mavnode->parameterSemaphore, (TickType_t)10) == pdTRUE)
         {
-            this->gcs_status("get_parameter 3");
-            Param param = this->mavnodeParam[number];
-            xSemaphoreGive(this->parameterSemaphore);
+            Param param = mavnode->mavnodeParam[number];
+            xSemaphoreGive(mavnode->parameterSemaphore);
             return param;
         }
     }
-    this->gcs_status("get_parameter failed");
+    gcs_status("get_parameter error");
     Param param;
     return param;
 }
@@ -112,46 +111,43 @@ Param MavNode::get_parameter(const int number)
 /*
 Threadsafe method to set a parameter
 */
-void MavNode::set_parameter(char* name, float value)
+void set_parameter(MavNode *mavnode, char* name, float value)
 {
-    if (parameterSemaphore != NULL)
+    if (mavnode->parameterSemaphore != NULL)
     {
-        if (xSemaphoreTake(parameterSemaphore, (TickType_t)10) == pdTRUE)
+        if (xSemaphoreTake(mavnode->parameterSemaphore, (TickType_t)10) == pdTRUE)
         {
             for (int i = 0; i < PARAMETER_COUNT; i++)
             {
-                if (strcmp(mavnodeParam[i].name, name) == 0)
+                if (strcmp(mavnode->mavnodeParam[i].name, name) == 0)
                 {
-                    mavnodeParam[i].value = value;
-                    // this->write_params_to_memory();
-                    xSemaphoreGive(parameterSemaphore);
+                    mavnode->mavnodeParam[i].value = value;
+                    write_param_to_memory(mavnode, i);
+                    xSemaphoreGive(mavnode->parameterSemaphore);
                     return;
                 }
             }
         }
     }
-    this->gcs_status("set_parameter failed");
+    gcs_status("set_parameter failed");
 }
 
 /*
 read parameters from filesystem
 */
-void MavNode::read_params_from_memory()
+void read_params_from_memory(MavNode *mavnode)
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
-        mavnodeParam[i].value = EEPROM.read(i);
+        mavnode->mavnodeParam[i].value = EEPROM.read(i);
     }
 }
 
 /*
 save parameters to filesystem
 */
-void MavNode::write_params_to_memory()
+void write_param_to_memory(MavNode *mavnode, int i)
 {
-    for (int i = 0; i < PARAMETER_COUNT; i++)
-    {
-        EEPROM.write(i, mavnodeParam[i].value);
-    }
+    EEPROM.write(i, mavnode->mavnodeParam[i].value);
     EEPROM.commit();
 }
