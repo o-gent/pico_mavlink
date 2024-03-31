@@ -7,7 +7,6 @@ void receive_update(MavNode *mavnode)
 {
     mavlink_message_t msg;
     mavlink_status_t status;
-    unsigned long previous_run = millis();
 
     while (true)
     {

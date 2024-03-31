@@ -22,7 +22,7 @@ void setup()
     
     SERIAL_MAVLINK.begin(57600);
 
-    SERIAL_SENSOR_1.begin(56700);
+    SERIAL_SENSOR_1.begin(57600);
 
     SERIAL_SENSOR_2.begin(57600);
 
