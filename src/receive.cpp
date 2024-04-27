@@ -1,5 +1,6 @@
 #include "mavnode.h"
 
+
 /*
 Get new mavlink packets we're interested in
 */
@@ -10,9 +11,17 @@ void receive_update(MavNode *mavnode)
 
     while (true)
     {
-        while (SERIAL_MAVLINK.available() > 0)
+
+        SerialUART* MAVLINK = &SERIAL_MAVLINK;
+        
+        if(Serial.available())
         {
-            uint8_t c = SERIAL_MAVLINK.read();
+            SerialUSB* MAVLINK = &Serial;
+        }
+
+        while (MAVLINK->available() > 0)
+        {
+            uint8_t c = MAVLINK->read();
             if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
             {
                 switch (msg.msgid)
@@ -34,7 +43,7 @@ void receive_update(MavNode *mavnode)
                 {
                     // mavlink_param_request_list_t paramrequestlist;
                     // mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
-                    send_all_parameters(mavnode);
+                    send_all_parameters(mavnode, *MAVLINK);
                     break;
                 }
 
@@ -43,7 +52,7 @@ void receive_update(MavNode *mavnode)
                     mavlink_param_set_t paramset;
                     mavlink_msg_param_set_decode(&msg, &paramset);
                     set_parameter(mavnode, paramset.param_id, paramset.param_value);
-                    send_parameter(mavnode, get_parameter(mavnode, paramset.param_id));
+                    send_parameter(mavnode, get_parameter(mavnode, paramset.param_id), *MAVLINK);
                     break;
                 }
 
@@ -52,7 +61,7 @@ void receive_update(MavNode *mavnode)
                     mavlink_param_request_read_t paramrequestread;
                     mavlink_msg_param_request_read_decode(&msg, &paramrequestread);
                     Param param = get_parameter(mavnode, paramrequestread.param_index);
-                    send_parameter(mavnode, param);
+                    send_parameter(mavnode, param, *MAVLINK);
                     break;
                 }
 
@@ -77,7 +86,6 @@ void recv_heartbeat(MavNode *mavnode, mavlink_message_t *msg)
     uint8_t autopilotType = heartbeat.autopilot;
     uint8_t baseMode = heartbeat.base_mode;
 
-    Serial.println("Heartbeat");
     if (led_toggle)
     {
         digitalWrite(LED_BUILTIN, LOW);
@@ -98,7 +106,4 @@ void recv_gps2raw(MavNode *mavnode, mavlink_message_t *msg)
     int32_t lat;
     int32_t lon;
     int32_t alt = gps2raw.alt;
-
-    Serial.print("Alt:");
-    Serial.println(alt);
 }

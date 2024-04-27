@@ -17,7 +17,7 @@ void param_init(MavNode *mavnode)
 /*
 Send a parameter to the autopilot
 */
-void send_parameter(MavNode *mavnode, Param parameter)
+void send_parameter(MavNode *mavnode, Param parameter, SerialUART MAVLINK)
 {
     mavlink_param_value_t param;
 
@@ -37,18 +37,18 @@ void send_parameter(MavNode *mavnode, Param parameter)
     // Copy the message to the send buffer
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-    SERIAL_MAVLINK.write(buf, len);
+    MAVLINK.write(buf, len);
 }
 
 /*
 iterate parameters to send to the autopilot
 */
-void send_all_parameters(MavNode *mavnode)
+void send_all_parameters(MavNode *mavnode, SerialUART MAVLINK)
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
         Param parameter = get_parameter(mavnode, i);
-        send_parameter(mavnode, parameter);
+        send_parameter(mavnode, parameter, MAVLINK);
     }
 }
 
@@ -86,6 +86,12 @@ Param get_parameter(MavNode *mavnode, const char *name)
     gcs_status("get_parameter error");
     Param param;
     return param;
+}
+
+float get_parameter_value(MavNode *mavnode, const char *name)
+{
+    Param result = get_parameter(mavnode, name);
+    return result.value;
 }
 
 /*

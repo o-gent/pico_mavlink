@@ -33,12 +33,12 @@ struct MavNode
 {
     SemaphoreHandle_t parameterSemaphore = NULL;
     Param mavnodeParam[PARAMETER_COUNT] = {
-        {"PARAM1", 1, MAV_PARAM_TYPE_UINT16, 0},
-        {"PARAM2", 2, MAV_PARAM_TYPE_UINT16, 0},
-        {"PARAM3", 3, MAV_PARAM_TYPE_UINT16, 0},
-        {"PARAM4", 4, MAV_PARAM_TYPE_UINT16, 0},
-        {"PARAM5", 5, MAV_PARAM_TYPE_UINT16, 0},
-        {"PARAM6", 6, MAV_PARAM_TYPE_UINT16, 0},
+        {"BATTID", 1, MAV_PARAM_TYPE_UINT16, 0},
+        {"STRAIN-1000", 2, MAV_PARAM_TYPE_UINT16, 0},
+        {"STRAIN-500", 3, MAV_PARAM_TYPE_UINT16, 0},
+        {"STRAIN_0", 4, MAV_PARAM_TYPE_UINT16, 0},
+        {"STRAIN_500", 5, MAV_PARAM_TYPE_UINT16, 0},
+        {"STRAIN_1000", 6, MAV_PARAM_TYPE_UINT16, 0},
         {"PARAM7", 7, MAV_PARAM_TYPE_UINT16, 0},
         {"PARAM8", 8, MAV_PARAM_TYPE_UINT16, 0},
         {"PARAM9", 9, MAV_PARAM_TYPE_UINT16, 0},
@@ -50,7 +50,7 @@ struct MavNode
 void gps2raw_request(MavNode *mavnode);     // commands
 void mav_request_data(MavNode *mavnode);    // commands
 void rangefinder1_update(MavNode *mavnode); // sensors
-void rangefinder2_update(MavNode *mavnode); // sensors
+void servo1_update(MavNode *mavnode); // sensors
 void heartbeat_update(MavNode *mavnode);    // commands
 void param_init(MavNode *mavnode);      // parameters
 
@@ -59,10 +59,11 @@ void reboot(MavNode *mavnode);
 void gcs_status(const char gcstext[]);
 
 // parameters.cpp
-void send_parameter(MavNode *mavnode, Param parameter);
-void send_all_parameters(MavNode *mavnode);
+void send_parameter(MavNode *mavnode, Param parameter, SerialUART MAVLINK);
+void send_all_parameters(MavNode *mavnode, SerialUART MAVLINK);
 Param get_parameter(MavNode *mavnode, const char *name);
 Param get_parameter(MavNode *mavnode, int number);
+float get_parameter_value(MavNode *mavnode, const char *name);
 
 void receive_parameter(MavNode *mavnode, mavlink_message_t *msg);
 void set_parameter(MavNode *mavnode, char *name, float value);

@@ -14,11 +14,18 @@ MavNode *mavnode = new MavNode();
 Setup comms links, start threads
 */
 void setup()
-{
-    pinMode(LED_BUILTIN, OUTPUT);
+{   
     
-    Serial.begin(9600);
-    Serial.println("started");
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    for (int i = 0;  i < 6; i++) {
+        digitalWrite(LED_BUILTIN, LOW);     delay(50);
+        digitalWrite(LED_BUILTIN, HIGH);    delay(50);
+    }
+
+    rp2040.wdt_begin(1000);
+    
+    Serial.begin(57600);
     
     SERIAL_MAVLINK.begin(57600);
 
@@ -51,7 +58,7 @@ void setup()
     );
 
     xTaskCreate(
-        (TaskFunction_t)rangefinder2_update, /* Task function. */
+        (TaskFunction_t)servo1_update, /* Task function. */
         "rangefinder2",       /* name of task. */
         1000,               /* Stack size of task */
         mavnode,                /* parameter of the task */
@@ -74,10 +81,11 @@ Our loop does nothing as all the activities are in threads
 */
 void loop()
 {   
-    mav_request_data(mavnode);
-    gps2raw_request(mavnode);
-    vTaskDelay(10000);
-    Serial.println("loop");
+    // mav_request_data(mavnode);
+    // gps2raw_request(mavnode);
+    vTaskDelay(500);
+    // Serial.println("loop");
+    rp2040.wdt_reset();
 }
 
 

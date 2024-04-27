@@ -1,5 +1,6 @@
 #include "mavnode.h"
-
+#include <Adafruit_NAU7802.h>
+#include <SparkFun_MCP9600.h>
 
 /*
 Routine to let the host ardupilot know we're still here
@@ -75,27 +76,31 @@ void rangefinder1_update(MavNode *mavnode)
     }
 }
 
+Adafruit_NAU7802 nau;
+MCP9600 mcp;
+
 
 /*
 Routine for sending new rangefinder information
 */
-void rangefinder2_update(MavNode *mavnode)
+void servo1_update(MavNode *mavnode)
 {
+    nau.begin();
+    Wire.begin();
+    Wire.setClock(100000);
+    Serial.println(mcp.begin(0x66));
+    
     unsigned long previous_run = millis();
     int i = 0;
 
-    mavlink_distance_sensor_t dist;
-    dist.time_boot_ms = millis();
-    dist.min_distance = 0;
-    dist.max_distance = UINT16_MAX;
-    dist.type = MAV_DISTANCE_SENSOR_UNKNOWN;
-    dist.id = 1;
-    // the orientation needs to match the orientation set in ardupilot otherwise it'll be rejected
-    dist.orientation = MAV_SENSOR_ROTATION_NONE;
-    dist.covariance = UINT8_MAX;
-    dist.horizontal_fov = 0;
-    dist.vertical_fov = 0;
-    dist.signal_quality = 0;
+    mavlink_battery_status_t battery;
+    battery.id = 1;
+    battery.id = get_parameter_value(mavnode, "BATTID");
+    float nstrain1000 = get_parameter_value(mavnode, "STRAIN-1000");
+    float nstrain500 = get_parameter_value(mavnode, "STRAIN-5000");
+    float strain0 = get_parameter_value(mavnode, "STRAIN_0");
+    float strain500 = get_parameter_value(mavnode, "STRAIN_500");
+    float strain1000 = get_parameter_value(mavnode, "STRAIN_1000");
     
     mavlink_message_t msg;
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -103,14 +108,20 @@ void rangefinder2_update(MavNode *mavnode)
     while (true)
     {
         i++;
-        dist.current_distance = i++;
-
-        mavlink_msg_distance_sensor_encode(TARGET_SYSTEM, THIS_COMPONENT, &msg, &dist);
+        battery.current_battery = i++;
+        battery.voltages[0] = nau.read() - 30000;
+        // battery.temperature = mcp.getThermocoupleTemp();
+        battery.battery_remaining = mcp.getThermocoupleTemp();
+        mavlink_msg_battery_status_encode(TARGET_SYSTEM, THIS_COMPONENT, &msg, &battery);
+        
+        // Serial.println(mcp.getThermocoupleTemp());
+        // Serial.println(nau.read());
 
         uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
         SERIAL_MAVLINK.write(buf, len);
-        
+        Serial.write(buf, len);
+
         vTaskDelay(rangefinder1_ms - (millis() - previous_run));
         previous_run = millis();
     }
