@@ -11,17 +11,9 @@ void receive_update(MavNode *mavnode)
 
     while (true)
     {
-
-        SerialUART* MAVLINK = &SERIAL_MAVLINK;
-        
-        if(Serial.available())
+        while (SERIAL_MAVLINK.available() > 0)
         {
-            SerialUSB* MAVLINK = &Serial;
-        }
-
-        while (MAVLINK->available() > 0)
-        {
-            uint8_t c = MAVLINK->read();
+            uint8_t c = SERIAL_MAVLINK.read();
             if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
             {
                 switch (msg.msgid)
@@ -43,7 +35,7 @@ void receive_update(MavNode *mavnode)
                 {
                     // mavlink_param_request_list_t paramrequestlist;
                     // mavlink_msg_param_request_list_decode(&msg, &paramrequestlist);
-                    send_all_parameters(mavnode, *MAVLINK);
+                    send_all_parameters(mavnode);
                     break;
                 }
 
@@ -52,7 +44,7 @@ void receive_update(MavNode *mavnode)
                     mavlink_param_set_t paramset;
                     mavlink_msg_param_set_decode(&msg, &paramset);
                     set_parameter(mavnode, paramset.param_id, paramset.param_value);
-                    send_parameter(mavnode, get_parameter(mavnode, paramset.param_id), *MAVLINK);
+                    send_parameter(mavnode, get_parameter(mavnode, paramset.param_id));
                     break;
                 }
 
@@ -61,7 +53,7 @@ void receive_update(MavNode *mavnode)
                     mavlink_param_request_read_t paramrequestread;
                     mavlink_msg_param_request_read_decode(&msg, &paramrequestread);
                     Param param = get_parameter(mavnode, paramrequestread.param_index);
-                    send_parameter(mavnode, param, *MAVLINK);
+                    send_parameter(mavnode, param);
                     break;
                 }
 

@@ -11,13 +11,15 @@ void param_init(MavNode *mavnode)
     {
         gcs_status("Semaphore creation failed");
     }
+    // delay(2000);
+    // wipe_param_memory(mavnode);
     read_params_from_memory(mavnode);
 }
 
 /*
 Send a parameter to the autopilot
 */
-void send_parameter(MavNode *mavnode, Param parameter, SerialUART MAVLINK)
+void send_parameter(MavNode *mavnode, Param parameter)
 {
     mavlink_param_value_t param;
 
@@ -37,18 +39,18 @@ void send_parameter(MavNode *mavnode, Param parameter, SerialUART MAVLINK)
     // Copy the message to the send buffer
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-    MAVLINK.write(buf, len);
+    SERIAL_MAVLINK.write(buf, len);
 }
 
 /*
 iterate parameters to send to the autopilot
 */
-void send_all_parameters(MavNode *mavnode, SerialUART MAVLINK)
+void send_all_parameters(MavNode *mavnode)
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
         Param parameter = get_parameter(mavnode, i);
-        send_parameter(mavnode, parameter, MAVLINK);
+        send_parameter(mavnode, parameter);
     }
 }
 
@@ -145,7 +147,8 @@ void read_params_from_memory(MavNode *mavnode)
 {
     for (int i = 0; i < PARAMETER_COUNT; i++)
     {
-        mavnode->mavnodeParam[i].value = EEPROM.read(i);
+        EEPROM.get(i, mavnode->mavnodeParam[i].value);
+        Serial.println(mavnode->mavnodeParam[i].value);
     }
 }
 
@@ -154,6 +157,18 @@ save parameters to filesystem
 */
 void write_param_to_memory(MavNode *mavnode, int i)
 {
-    EEPROM.write(i, mavnode->mavnodeParam[i].value);
+    EEPROM.put(i, mavnode->mavnodeParam[i].value);
+    EEPROM.commit();
+}
+
+/*
+wipe parameters
+*/
+void wipe_param_memory(MavNode *mavnode)
+{
+    for (int i = 0; i < PARAMETER_COUNT; i++)
+    {
+        EEPROM.put(i, mavnode->mavnodeParam[i].value);
+    }
     EEPROM.commit();
 }

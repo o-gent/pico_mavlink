@@ -22,8 +22,6 @@ void setup()
         digitalWrite(LED_BUILTIN, LOW);     delay(50);
         digitalWrite(LED_BUILTIN, HIGH);    delay(50);
     }
-
-    rp2040.wdt_begin(1000);
     
     Serial.begin(57600);
     
@@ -39,6 +37,8 @@ void setup()
 
     param_init(mavnode);
 
+    rp2040.wdt_begin(1000);
+
     xTaskCreate(
         (TaskFunction_t)heartbeat_update, /* Task function. */
         "record",         /* name of task. */
@@ -48,14 +48,14 @@ void setup()
         &heartbeat_thread /* Task handle to keep track of created task */
     );
 
-    xTaskCreate(
-        (TaskFunction_t)rangefinder1_update, /* Task function. */
-        "rangefinder",       /* name of task. */
-        1000,               /* Stack size of task */
-        mavnode,                /* parameter of the task */
-        1,                   /* priority of the task */
-        &rangefinder1_thread /* Task handle to keep track of created task */
-    );
+    // xTaskCreate(
+    //     (TaskFunction_t)rangefinder1_update, /* Task function. */
+    //     "rangefinder",       /* name of task. */
+    //     1000,               /* Stack size of task */
+    //     mavnode,                /* parameter of the task */
+    //     1,                   /* priority of the task */
+    //     &rangefinder1_thread /* Task handle to keep track of created task */
+    // );
 
     xTaskCreate(
         (TaskFunction_t)servo1_update, /* Task function. */
