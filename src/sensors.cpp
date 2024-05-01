@@ -100,6 +100,8 @@ void servo1_update(MavNode *mavnode)
     as5600.begin();
     as5600.setDirection(AS5600_CLOCK_WISE);
 
+    uint16_t initial_angle = as5600.readAngle()/11.377777;
+
     unsigned long previous_run = millis();
     int i = 0;
 
@@ -128,11 +130,11 @@ void servo1_update(MavNode *mavnode)
     {
 
         int32_t strain_reading = nau.read();
-        uint16_t servo_angle = as5600.readAngle();
+        uint16_t servo_angle = as5600.readAngle()/11.377777 + 180 - initial_angle;
         float temperature = mcp.getThermocoupleTemp();
         
-        battery.voltages[0] = 0;
-        battery.temperature = servo_angle;
+        battery.voltages[0] = servo_angle;
+        battery.temperature = 0;
         battery.current_battery = map_strain(strain_reading, *strainmap);
         battery.battery_remaining = temperature;
 
